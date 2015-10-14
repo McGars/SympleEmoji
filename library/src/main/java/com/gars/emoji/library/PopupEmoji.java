@@ -3,14 +3,17 @@ package com.gars.emoji.library;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Rect;
 import android.support.annotation.ColorRes;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
@@ -35,12 +38,22 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
     private List<Fragment> pages;
     private int selectedColor;
     private boolean autoChangeColorSelection;
+    private View rootView;
 
     public PopupEmoji(FragmentActivity activity){
         this.activity = activity;
         selectedColor = activity.getResources().getColor(getAttributeResourceId(activity, R.attr.colorAccent));
+        initRootView();
         initView();
         setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+    }
+
+    private void initRootView() {
+        ViewGroup decorView = (ViewGroup) activity.findViewById(android.R.id.content);
+        if(decorView!=null){
+            rootView = decorView.getChildAt(0);
+            registerScreenResize();
+        }
     }
 
     public void setSelectedColor(@ColorRes int selectedColor) {
@@ -49,6 +62,10 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
 
     public void setAutoChangeColorSelectionTab(boolean autoChangeColorSelection){
         this.autoChangeColorSelection = autoChangeColorSelection;
+    }
+
+    public void show(boolean show){
+        showAtLocation(rootView, Gravity.BOTTOM, 0, 0);
     }
 
     public void setPages(List<View> tabs, List<Fragment> pages){
@@ -165,5 +182,45 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
             e.printStackTrace();
             return 0;
         }
+    }
+
+    public void registerScreenResize(){
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+//                Rect r = new Rect();
+//                rootView.getWindowVisibleDisplayFrame(r);
+//
+//                int screenHeight = rootView.getRootView()
+//                        .getHeight();
+//                int heightDifference = screenHeight
+//                        - (r.bottom - r.top);
+//                int resourceId = activity.getResources()
+//                        .getIdentifier("status_bar_height",
+//                                "dimen", "android");
+//                if (resourceId > 0) {
+//                    heightDifference -= activity.getResources()
+//                            .getDimensionPixelSize(resourceId);
+//                }
+//                if (heightDifference > 100) {
+//                    keyBoardHeight = heightDifference;
+//                    setSize(WindowManager.LayoutParams.MATCH_PARENT, keyBoardHeight);
+//                    if(isOpened == false){
+//                        if(onSoftKeyboardOpenCloseListener!=null)
+//                            onSoftKeyboardOpenCloseListener.onKeyboardOpen(keyBoardHeight);
+//                    }
+//                    isOpened = true;
+//                    if(pendingOpen){
+//                        showAtBottom();
+//                        pendingOpen = false;
+//                    }
+//                }
+//                else{
+//                    isOpened = false;
+//                    if(onSoftKeyboardOpenCloseListener!=null)
+//                        onSoftKeyboardOpenCloseListener.onKeyboardClose();
+//                }
+            }
+        });
     }
 }
