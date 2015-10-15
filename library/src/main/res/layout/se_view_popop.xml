@@ -2,18 +2,25 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#333333"
     android:orientation="vertical">
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <HorizontalScrollView
-            android:id="@+id/tabsView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+            android:layout_weight="1">
+            <LinearLayout
+                android:id="@+id/tabsView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"/>
+
+            </HorizontalScrollView>
         <ImageView
             android:id="@+id/ivback"
             android:layout_width="wrap_content"
@@ -21,7 +28,7 @@
     </LinearLayout>
 
     <android.support.v4.view.ViewPager
-        android:id="@+id/viewPager"
+        android:id="@+id/viewPagerEmoji"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 </LinearLayout>

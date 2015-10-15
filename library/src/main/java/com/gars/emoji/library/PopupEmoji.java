@@ -1,24 +1,25 @@
 package com.gars.emoji.library;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.Build;
 import android.support.annotation.ColorRes;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.util.TypedValue;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
-import android.widget.HorizontalScrollView;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
-import android.widget.TextView;
 
 import com.gars.emoji.library.adapter.FragmentPageAdapter;
 import com.gars.emoji.library.listeners.EmojiTabListener;
@@ -31,18 +32,20 @@ import java.util.List;
 public class PopupEmoji extends PopupWindow implements View.OnClickListener, ViewPager.OnPageChangeListener {
 
     private FragmentActivity activity;
-    private HorizontalScrollView tabsView;
+    private EditText editText;
+    private ViewGroup tabsView;
     private ImageView ivback;
     private ViewPager viewPager;
     private List<View> tabs;
-    private List<Fragment> pages;
+    private List<View> pages;
     private int selectedColor;
     private boolean autoChangeColorSelection;
     private View rootView;
 
-    public PopupEmoji(FragmentActivity activity){
+    public PopupEmoji(FragmentActivity activity, EditText editText){
         this.activity = activity;
-        selectedColor = activity.getResources().getColor(getAttributeResourceId(activity, R.attr.colorAccent));
+        this.editText = editText;
+//        selectedColor = activity.getResources().getColor(getAttributeResourceId(activity, R.attr.colorAccent));
         initRootView();
         initView();
         setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
@@ -65,30 +68,38 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
     }
 
     public void show(boolean show){
-        showAtLocation(rootView, Gravity.BOTTOM, 0, 0);
+        if(show)
+            showAtLocation(rootView, Gravity.BOTTOM, 0, 0);
+        else
+            dismiss();
     }
 
-    public void setPages(List<View> tabs, List<Fragment> pages){
+    public void setPages(List<View> tabs, List<View> pages){
         this.tabs = tabs;
         this.pages = pages;
 
         if(!initCustomTabs())
             initSimpleTabs();
 
-        FragmentPageAdapter adapter = new FragmentPageAdapter(activity.getSupportFragmentManager(), pages);
-        viewPager.setAdapter(adapter);
+        viewPager.removeAllViews();
+        for (View view : pages) {
+            viewPager.addView(view);
+        }
+
+//        FragmentPageAdapter adapter = new FragmentPageAdapter(activity.getSupportFragmentManager(), pages);
+//        viewPager.setAdapter(adapter);
     }
 
-    public void setPages(List<Fragment> pages){
+    public void setPages(List<View> pages){
         setPages(null, pages);
     }
 
     protected void initView(){
         LayoutInflater inflater = LayoutInflater.from(activity);
         View v = inflater.inflate(R.layout.se_view_popop, null);
-        tabsView = (HorizontalScrollView)v.findViewById(R.id.tabsView);
+        tabsView = (ViewGroup)v.findViewById(R.id.tabsView);
         ivback = (ImageView)v.findViewById(R.id.ivback);
-        viewPager = (ViewPager)v.findViewById(R.id.viewPager);
+        viewPager = (ViewPager)v.findViewById(R.id.viewPagerEmoji);
 
         ivback.setOnClickListener(this);
         viewPager.addOnPageChangeListener(this);
@@ -98,7 +109,7 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
 
     private void initSimpleTabs() {
         tabsView.removeAllViews();
-        for (Fragment page : pages) {
+        for (View page : pages) {
             if(page instanceof EmojiTabListener){
                 int icon = ((EmojiTabListener) page).getIcon();
                 ImageView v = new ImageView(activity);
@@ -188,23 +199,41 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-//                Rect r = new Rect();
-//                rootView.getWindowVisibleDisplayFrame(r);
+
+
+                Display display = activity.getWindowManager().getDefaultDisplay();
+
+                Point screenSize = new Point();
+                //Point screenRealSize = h.getRealSize(context);
+
+                // Get the width of the screen
+                if(Build.VERSION.SDK_INT >= 13){
+                    display.getSize(screenSize);
+                } else {
+                    screenSize.set(display.getWidth(), display.getHeight());
+                }
+
+
+
+                Rect r = new Rect();
+                rootView.getWindowVisibleDisplayFrame(r);
 //
 //                int screenHeight = rootView.getRootView()
 //                        .getHeight();
-//                int heightDifference = screenHeight
-//                        - (r.bottom - r.top);
-//                int resourceId = activity.getResources()
-//                        .getIdentifier("status_bar_height",
-//                                "dimen", "android");
-//                if (resourceId > 0) {
-//                    heightDifference -= activity.getResources()
-//                            .getDimensionPixelSize(resourceId);
-//                }
-//                if (heightDifference > 100) {
+                int heightDifference = screenSize.y
+                        - (r.bottom - r.top);
+                int resourceId = activity.getResources()
+                        .getIdentifier("status_bar_height",
+                                "dimen", "android");
+
+                if (resourceId > 0) {
+                    heightDifference -= activity.getResources()
+                            .getDimensionPixelSize(resourceId);
+                }
+                if (heightDifference > 100) {
 //                    keyBoardHeight = heightDifference;
-//                    setSize(WindowManager.LayoutParams.MATCH_PARENT, keyBoardHeight);
+                    setWidth(WindowManager.LayoutParams.MATCH_PARENT);
+                    setHeight(heightDifference);
 //                    if(isOpened == false){
 //                        if(onSoftKeyboardOpenCloseListener!=null)
 //                            onSoftKeyboardOpenCloseListener.onKeyboardOpen(keyBoardHeight);
@@ -214,12 +243,13 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
 //                        showAtBottom();
 //                        pendingOpen = false;
 //                    }
-//                }
-//                else{
+                }
+                else{
+                    dismiss();
 //                    isOpened = false;
 //                    if(onSoftKeyboardOpenCloseListener!=null)
 //                        onSoftKeyboardOpenCloseListener.onKeyboardClose();
-//                }
+                }
             }
         });
     }

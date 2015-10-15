@@ -8,4 +8,5 @@ import android.support.annotation.DrawableRes;
 public interface EmojiTabListener {
     @DrawableRes
     public int getIcon();
+
 }
