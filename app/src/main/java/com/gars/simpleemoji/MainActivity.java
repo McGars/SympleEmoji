@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public List<View> getPages() {
         List<View> pages = new ArrayList<>();
         pages.add(new EmojiView(this));
-        pages.add(new EmojiView(this));
+        pages.add(new EmojiView2(this));
         return pages;
     }
 

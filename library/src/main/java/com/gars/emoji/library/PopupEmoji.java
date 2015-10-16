@@ -19,9 +19,9 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
-import com.gars.emoji.library.adapter.FragmentPageAdapter;
 import com.gars.emoji.library.listeners.EmojiTabListener;
 
 import java.util.List;
@@ -31,6 +31,7 @@ import java.util.List;
  */
 public class PopupEmoji extends PopupWindow implements View.OnClickListener, ViewPager.OnPageChangeListener {
 
+    private final EmojiPagerAdapter adapter;
     private FragmentActivity activity;
     private EditText editText;
     private ViewGroup tabsView;
@@ -46,6 +47,7 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         this.activity = activity;
         this.editText = editText;
 //        selectedColor = activity.getResources().getColor(getAttributeResourceId(activity, R.attr.colorAccent));
+        adapter = new EmojiPagerAdapter();
         initRootView();
         initView();
         setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
@@ -81,10 +83,14 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         if(!initCustomTabs())
             initSimpleTabs();
 
-        viewPager.removeAllViews();
+        adapter.clear();
+
+//        viewPager.removeAllViews();
         for (View view : pages) {
-            viewPager.addView(view);
+            adapter.addView(view);
+//            viewPager.addView(view);
         }
+        viewPager.setAdapter(adapter);
 
 //        FragmentPageAdapter adapter = new FragmentPageAdapter(activity.getSupportFragmentManager(), pages);
 //        viewPager.setAdapter(adapter);
@@ -109,11 +115,17 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
 
     private void initSimpleTabs() {
         tabsView.removeAllViews();
+        int size = pxToDp(32, activity);
+        int padding = pxToDp(4, activity);
         for (View page : pages) {
             if(page instanceof EmojiTabListener){
                 int icon = ((EmojiTabListener) page).getIcon();
                 ImageView v = new ImageView(activity);
-                v.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                v.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
+                params.leftMargin = padding;
+                params.rightMargin = padding;
+                v.setLayoutParams(params);
                 v.setImageResource(icon);
                 v.setOnClickListener(tabLick);
                 tabsView.addView(v);
@@ -252,5 +264,9 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
                 }
             }
         });
+    }
+
+    public static int pxToDp(int px, Context contex) {
+        return (int)TypedValue.applyDimension(1, (float)px, contex.getResources().getDisplayMetrics());
     }
 }
