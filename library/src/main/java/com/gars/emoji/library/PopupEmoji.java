@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -40,12 +41,17 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
     private List<View> tabs;
     private List<View> pages;
     private int selectedColor;
-    private boolean autoChangeColorSelection;
+    private boolean autoChangeColorSelection = true;
     private View rootView;
+    private boolean isShow;
 
     public PopupEmoji(FragmentActivity activity, EditText editText){
         this.activity = activity;
         this.editText = editText;
+        selectedColor = activity.getResources().getColor(getAttributeResourceId(activity, R.attr.emojiColorPrecced));
+//        selectedColor = activity.getResources().getColor(activity.getResources()
+//                .getIdentifier("colorAccent",
+//                        "color", "android"));
 //        selectedColor = activity.getResources().getColor(getAttributeResourceId(activity, R.attr.colorAccent));
         adapter = new EmojiPagerAdapter();
         initRootView();
@@ -70,10 +76,18 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
     }
 
     public void show(boolean show){
-        if(show)
-            showAtLocation(rootView, Gravity.BOTTOM, 0, 0);
-        else
+        isShow = show;
+        if(show){
+            if(!isShowing()){
+                showKeyboard();
+                show();
+            }
+        } else if (isShowing())
             dismiss();
+    }
+
+    private void show(){
+        showAtLocation(rootView, Gravity.BOTTOM, 0, 0);
     }
 
     public void setPages(List<View> tabs, List<View> pages){
@@ -112,7 +126,8 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         tabsView.removeAllViews();
         int size = pxToDp(32, activity);
         int padding = pxToDp(4, activity);
-        for (View page : pages) {
+        for (int i = 0; i < pages.size(); i++) {
+            View page = pages.get(i);
             if(page instanceof EmojiTabListener){
                 int icon = ((EmojiTabListener) page).getIcon();
                 ImageView v = new ImageView(activity);
@@ -123,6 +138,8 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
                 v.setLayoutParams(params);
                 v.setImageResource(icon);
                 v.setOnClickListener(tabLick);
+                if(i == 0 && autoChangeColorSelection)
+                    v.setBackgroundColor(selectedColor);
                 tabsView.addView(v);
             }
         }
@@ -209,10 +226,7 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
 
 
                 Display display = activity.getWindowManager().getDefaultDisplay();
-
                 Point screenSize = new Point();
-                //Point screenRealSize = h.getRealSize(context);
-
                 // Get the width of the screen
                 if(Build.VERSION.SDK_INT >= 13){
                     display.getSize(screenSize);
@@ -220,13 +234,9 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
                     screenSize.set(display.getWidth(), display.getHeight());
                 }
 
-
-
                 Rect r = new Rect();
                 rootView.getWindowVisibleDisplayFrame(r);
 //
-//                int screenHeight = rootView.getRootView()
-//                        .getHeight();
                 int heightDifference = screenSize.y
                         - (r.bottom - r.top);
                 int resourceId = activity.getResources()
@@ -237,31 +247,45 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
                     heightDifference -= activity.getResources()
                             .getDimensionPixelSize(resourceId);
                 }
-                if (heightDifference > 100) {
-//                    keyBoardHeight = heightDifference;
+
+                if (heightDifference > 70) {
+
                     setWidth(WindowManager.LayoutParams.MATCH_PARENT);
                     setHeight(heightDifference);
-//                    if(isOpened == false){
-//                        if(onSoftKeyboardOpenCloseListener!=null)
-//                            onSoftKeyboardOpenCloseListener.onKeyboardOpen(keyBoardHeight);
-//                    }
-//                    isOpened = true;
-//                    if(pendingOpen){
-//                        showAtBottom();
-//                        pendingOpen = false;
-//                    }
-                }
-                else{
-                    dismiss();
-//                    isOpened = false;
-//                    if(onSoftKeyboardOpenCloseListener!=null)
-//                        onSoftKeyboardOpenCloseListener.onKeyboardClose();
+
+                    if(isShow && !isShowing()){
+                        show();
+                    }
+                } else {
+                    if(isShowing())
+                        dismiss();
                 }
             }
         });
     }
 
+//    boolean checkIfKeyBoardIsOpen(){
+//        InputMethodManager imm = (InputMethodManager) activity
+//                .getSystemService(Context.INPUT_METHOD_SERVICE);
+//
+//        if (imm.isAcceptingText()) {
+//            return true;
+//        } else {
+//            return false;
+//        }
+//    }
+
     public static int pxToDp(int px, Context contex) {
         return (int)TypedValue.applyDimension(1, (float)px, contex.getResources().getDisplayMetrics());
+    }
+
+    public boolean showKeyboard() {
+        if(editText != null && editText.getWindowToken() != null) {
+            editText.requestFocus();
+            InputMethodManager imm = (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            return imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT);
+        } else {
+            return true;
+        }
     }
 }
