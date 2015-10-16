@@ -83,17 +83,12 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         if(!initCustomTabs())
             initSimpleTabs();
 
+        viewPager.setAdapter(null);
         adapter.clear();
-
-//        viewPager.removeAllViews();
         for (View view : pages) {
             adapter.addView(view);
-//            viewPager.addView(view);
         }
         viewPager.setAdapter(adapter);
-
-//        FragmentPageAdapter adapter = new FragmentPageAdapter(activity.getSupportFragmentManager(), pages);
-//        viewPager.setAdapter(adapter);
     }
 
     public void setPages(List<View> pages){
