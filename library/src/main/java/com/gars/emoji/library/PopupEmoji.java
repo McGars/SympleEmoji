@@ -45,6 +45,7 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
     private boolean autoChangeColorSelection = true;
     private View rootView;
     private boolean isShow;
+    private boolean keyboardOpen;
 
     public PopupEmoji(FragmentActivity activity, EditText editText){
         this.activity = activity;
@@ -80,10 +81,14 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
     public void show(boolean show){
         isShow = show;
         if(show){
-            showKeyboard();
-            show();
-        } else if (isShowing())
+            if(!keyboardOpen)
+                showKeyboard();
+            else
+                show();
+        } else if (isShowing()){
+            invalidatePopupViews(false);
             dismiss();
+        }
     }
 
     private void show(){
@@ -257,14 +262,14 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
                 }
 
                 if (heightDifference > 70) {
-
+                    keyboardOpen = true;
                     setWidth(WindowManager.LayoutParams.MATCH_PARENT);
                     setHeight(heightDifference);
 
-                    if(isShow && !isShowing()){
+                    if(isShow)
                         show();
-                    }
                 } else {
+                    keyboardOpen = false;
                     if(isShowing()){
                         invalidatePopupViews(false);
                         dismiss();
