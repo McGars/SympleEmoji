@@ -23,6 +23,11 @@ public class EmojiView2 extends BaseEmojiPage {
     }
 
     @Override
+    public void onEmojiShow(boolean show) {
+
+    }
+
+    @Override
     protected void init() {
         super.init();
         List<SmileItem> list = getSmileItem();

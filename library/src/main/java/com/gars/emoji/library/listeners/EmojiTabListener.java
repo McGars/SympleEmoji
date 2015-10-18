@@ -9,4 +9,5 @@ public interface EmojiTabListener {
     @DrawableRes
     public int getIcon();
 
+    public void onEmojiShow(boolean show);
 }

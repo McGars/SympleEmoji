@@ -2,6 +2,7 @@ package com.gars.emoji.library;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Build;
@@ -48,11 +49,12 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
     public PopupEmoji(FragmentActivity activity, EditText editText){
         this.activity = activity;
         this.editText = editText;
-        selectedColor = activity.getResources().getColor(getAttributeResourceId(activity, R.attr.emojiColorPrecced));
-//        selectedColor = activity.getResources().getColor(activity.getResources()
-//                .getIdentifier("colorAccent",
-//                        "color", "android"));
-//        selectedColor = activity.getResources().getColor(getAttributeResourceId(activity, R.attr.colorAccent));
+        int color = getAttributeResourceId(activity, R.attr.emojiColorPressed);
+        if(color == 0){
+            selectedColor = Color.DKGRAY;
+        } else {
+            selectedColor = activity.getResources().getColor(color);
+        }
         adapter = new EmojiPagerAdapter();
         initRootView();
         initView();
@@ -78,16 +80,24 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
     public void show(boolean show){
         isShow = show;
         if(show){
-            if(!isShowing()){
-                showKeyboard();
-                show();
-            }
+            showKeyboard();
+            show();
         } else if (isShowing())
             dismiss();
     }
 
     private void show(){
-        showAtLocation(rootView, Gravity.BOTTOM, 0, 0);
+        if(!isShowing()){
+            showAtLocation(rootView, Gravity.BOTTOM, 0, 0);
+            invalidatePopupViews(true);
+        }
+    }
+
+    private void invalidatePopupViews(boolean show){
+        for (View view : pages) {
+            if(view instanceof EmojiTabListener)
+                ((EmojiTabListener) view).onEmojiShow(show);
+        }
     }
 
     public void setPages(List<View> tabs, List<View> pages){
@@ -223,8 +233,6 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-
-
                 Display display = activity.getWindowManager().getDefaultDisplay();
                 Point screenSize = new Point();
                 // Get the width of the screen
@@ -257,8 +265,10 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
                         show();
                     }
                 } else {
-                    if(isShowing())
+                    if(isShowing()){
+                        invalidatePopupViews(false);
                         dismiss();
+                    }
                 }
             }
         });
