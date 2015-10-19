@@ -1,5 +1,8 @@
 <resources>
 
     <!-- Base application theme. -->
-
+    <style name="emojibackspaceicon">
+        <item name="android:src">@drawable/ic_action_backspace</item>
+        <item name="android:layout_marginRight">4dp</item>
+    </style>
 </resources>

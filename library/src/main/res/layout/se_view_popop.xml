@@ -28,7 +28,8 @@
         <ImageView
             android:id="@+id/ivback"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            style="@style/emojibackspaceicon"/>
     </LinearLayout>
     <View
         android:layout_width="match_parent"

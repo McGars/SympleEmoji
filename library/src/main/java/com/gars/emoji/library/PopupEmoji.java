@@ -7,12 +7,12 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Build;
 import android.support.annotation.ColorRes;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +24,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
-import com.gars.emoji.library.listeners.EmojiTabListener;
+import com.gars.emoji.library.listeners.OnBackspaceListener;
+import com.gars.emoji.library.listeners.OnEmojiKeyboardListener;
+import com.gars.emoji.library.listeners.OnEmojiTabListener;
 
 import java.util.List;
 
@@ -46,6 +48,8 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
     private View rootView;
     private boolean isShow;
     private boolean keyboardOpen;
+    private OnEmojiKeyboardListener onEmojiKeyboardListener;
+    private OnBackspaceListener onBackspaceListener;
 
     public PopupEmoji(FragmentActivity activity, EditText editText){
         this.activity = activity;
@@ -70,14 +74,42 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         }
     }
 
+    /**
+     * Change background color tab view when page selected
+     * @param selectedColor
+     */
     public void setSelectedColor(@ColorRes int selectedColor) {
         this.selectedColor = selectedColor;
     }
 
+    /**
+     * Set access change background color tab view
+     * @param autoChangeColorSelection
+     */
     public void setAutoChangeColorSelectionTab(boolean autoChangeColorSelection){
         this.autoChangeColorSelection = autoChangeColorSelection;
     }
 
+    /**
+     * Listener for open or close keyboard
+     * @param onEmojiKeyboardListener
+     */
+    public void setOnEmojiKeyboardListener(OnEmojiKeyboardListener onEmojiKeyboardListener){
+        this.onEmojiKeyboardListener = onEmojiKeyboardListener;
+    }
+
+    /**
+     * Listener for remove text in EditText click on back space
+     * @param onBackspaceListener
+     */
+    public void setOnBackspaceListener(OnBackspaceListener onBackspaceListener){
+        this.onBackspaceListener = onBackspaceListener;
+    }
+
+    /**
+     * Open emoji
+     * @param show
+     */
     public void show(boolean show){
         isShow = show;
         if(show){
@@ -98,13 +130,22 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         }
     }
 
+    /**
+     * Pages must implements {@link OnEmojiTabListener}
+     * Calls when emoji open or hidden
+     * @param show
+     */
     private void invalidatePopupViews(boolean show){
         for (View view : pages) {
-            if(view instanceof EmojiTabListener)
-                ((EmojiTabListener) view).onEmojiShow(show);
+            if(view instanceof OnEmojiTabListener)
+                ((OnEmojiTabListener) view).onEmojiShow(show);
         }
     }
 
+    /**
+     * @param tabs override default tabs for pages
+     * @param pages
+     */
     public void setPages(List<View> tabs, List<View> pages){
         this.tabs = tabs;
         this.pages = pages;
@@ -120,6 +161,11 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         viewPager.setAdapter(adapter);
     }
 
+    /**
+     * Set view pages in viewPager
+     * Pages must implements {@link OnEmojiTabListener} for creating tabs
+     * @param pages
+     */
     public void setPages(List<View> pages){
         setPages(null, pages);
     }
@@ -137,14 +183,14 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         setContentView(v);
     }
 
-    private void initSimpleTabs() {
+    protected void initSimpleTabs() {
         tabsView.removeAllViews();
         int size = pxToDp(32, activity);
         int padding = pxToDp(4, activity);
         for (int i = 0; i < pages.size(); i++) {
             View page = pages.get(i);
-            if(page instanceof EmojiTabListener){
-                int icon = ((EmojiTabListener) page).getIcon();
+            if(page instanceof OnEmojiTabListener){
+                int icon = ((OnEmojiTabListener) page).getIcon();
                 ImageView v = new ImageView(activity);
                 v.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
@@ -160,7 +206,7 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         }
     }
 
-    private boolean initCustomTabs() {
+    protected boolean initCustomTabs() {
         if(tabs!=null){
             tabsView.removeAllViews();
             for (View tab : tabs) {
@@ -185,7 +231,9 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
     @Override
     public void onClick(View v) {
         if(v.getId() == R.id.ivback){
-
+            if(onBackspaceListener!=null && onBackspaceListener.onBackSpace())
+                return;
+            editText.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL));
         }
     }
 
@@ -199,7 +247,12 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         setSelectionColor(position);
     }
 
-    private void setSelectionColor(int position){
+    /**
+     * if {@link #autoChangeColorSelection} = true, setted background color to selectedColor of tab view
+     * Set background color
+     * @param position
+     */
+    protected void setSelectionColor(int position){
         if(!autoChangeColorSelection)
             return;
         for (int i = 0; i < tabsView.getChildCount(); i++) {
@@ -220,20 +273,6 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
 
     }
 
-    public static int getAttributeResourceId(Context context, int attr){
-        try {
-            TypedValue typedValue = new TypedValue();
-            int[] resIdAttr = new int[] { attr };
-            TypedArray a = context.obtainStyledAttributes(typedValue.data, resIdAttr);
-            int resId = a.getResourceId(0, 0);
-            a.recycle();
-            return resId;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 0;
-        }
-    }
-
     public void registerScreenResize(){
         rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -241,7 +280,7 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
                 Display display = activity.getWindowManager().getDefaultDisplay();
                 Point screenSize = new Point();
                 // Get the width of the screen
-                if(Build.VERSION.SDK_INT >= 13){
+                if (Build.VERSION.SDK_INT >= 13) {
                     display.getSize(screenSize);
                 } else {
                     screenSize.set(display.getWidth(), display.getHeight());
@@ -261,16 +300,18 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
                             .getDimensionPixelSize(resourceId);
                 }
 
-                if (heightDifference > 70) {
+                if (heightDifference > 30) {
+                    keyboardTrigger(!keyboardOpen);
                     keyboardOpen = true;
                     setWidth(WindowManager.LayoutParams.MATCH_PARENT);
                     setHeight(heightDifference);
 
-                    if(isShow)
+                    if (isShow)
                         show();
                 } else {
+                    keyboardTrigger(keyboardOpen);
                     keyboardOpen = false;
-                    if(isShowing()){
+                    if (isShowing()) {
                         invalidatePopupViews(false);
                         dismiss();
                     }
@@ -279,21 +320,30 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         });
     }
 
-//    boolean checkIfKeyBoardIsOpen(){
-//        InputMethodManager imm = (InputMethodManager) activity
-//                .getSystemService(Context.INPUT_METHOD_SERVICE);
-//
-//        if (imm.isAcceptingText()) {
-//            return true;
-//        } else {
-//            return false;
-//        }
-//    }
+    /**
+     * Trigger call when keyboard opened or closed
+     * @param check
+     */
+    protected void keyboardTrigger(boolean check){
+        if(check)
+            if(onEmojiKeyboardListener!=null)
+                onEmojiKeyboardListener.onOpenKeyboard(keyboardOpen);
+    }
 
+    /**
+     * Convert px to dp
+     * @param px
+     * @param contex
+     * @return
+     */
     public static int pxToDp(int px, Context contex) {
         return (int)TypedValue.applyDimension(1, (float)px, contex.getResources().getDisplayMetrics());
     }
 
+    /**
+     * Open keyboard in she not open
+     * @return
+     */
     public boolean showKeyboard() {
         if(editText != null && editText.getWindowToken() != null) {
             editText.requestFocus();
@@ -301,6 +351,26 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
             return imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT);
         } else {
             return true;
+        }
+    }
+
+    /**
+     * Get resource id for pressed color in tab bar
+     * @param context
+     * @param attr
+     * @return
+     */
+    public static int getAttributeResourceId(Context context, int attr){
+        try {
+            TypedValue typedValue = new TypedValue();
+            int[] resIdAttr = new int[] { attr };
+            TypedArray a = context.obtainStyledAttributes(typedValue.data, resIdAttr);
+            int resId = a.getResourceId(0, 0);
+            a.recycle();
+            return resId;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
         }
     }
 }

@@ -2,23 +2,19 @@ package com.gars.emoji.library;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.graphics.Color;
 import android.os.Build;
 import android.support.annotation.LayoutRes;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.GridView;
 
-import com.gars.emoji.library.listeners.EmojiTabListener;
-
-import java.util.zip.Inflater;
+import com.gars.emoji.library.listeners.OnEmojiTabListener;
 
 /**
  * Created by Владимир on 16.10.2015.
  */
-public abstract class BaseEmojiPage extends FrameLayout implements EmojiTabListener {
+public abstract class BaseEmojiPage extends FrameLayout implements OnEmojiTabListener {
     protected GridView gridView;
 
     public BaseEmojiPage(Context context) {
