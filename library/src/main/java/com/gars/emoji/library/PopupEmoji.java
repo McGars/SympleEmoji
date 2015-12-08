@@ -274,51 +274,64 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
     }
 
     public void registerScreenResize(){
-        rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                Display display = activity.getWindowManager().getDefaultDisplay();
-                Point screenSize = new Point();
-                // Get the width of the screen
-                if (Build.VERSION.SDK_INT >= 13) {
-                    display.getSize(screenSize);
-                } else {
-                    screenSize.set(display.getWidth(), display.getHeight());
-                }
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
+    }
 
-                Rect r = new Rect();
-                rootView.getWindowVisibleDisplayFrame(r);
+    /**
+     * Remove layout listener from root view
+     */
+    public void onDestroy(){
+        if(Build.VERSION.SDK_INT>=16)
+            rootView.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener);
+        else
+            rootView.getViewTreeObserver().removeGlobalOnLayoutListener(layoutListener);
+        dismiss();
+    }
+
+    ViewTreeObserver.OnGlobalLayoutListener layoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+        @Override
+        public void onGlobalLayout() {
+            Display display = activity.getWindowManager().getDefaultDisplay();
+            Point screenSize = new Point();
+            // Get the width of the screen
+            if (Build.VERSION.SDK_INT >= 13) {
+                display.getSize(screenSize);
+            } else {
+                screenSize.set(display.getWidth(), display.getHeight());
+            }
+
+            Rect r = new Rect();
+            rootView.getWindowVisibleDisplayFrame(r);
 //
-                int heightDifference = screenSize.y
-                        - (r.bottom - r.top);
-                int resourceId = activity.getResources()
-                        .getIdentifier("status_bar_height",
-                                "dimen", "android");
+            int heightDifference = screenSize.y
+                    - (r.bottom - r.top);
+            int resourceId = activity.getResources()
+                    .getIdentifier("status_bar_height",
+                            "dimen", "android");
 
-                if (resourceId > 0) {
-                    heightDifference -= activity.getResources()
-                            .getDimensionPixelSize(resourceId);
-                }
+            if (resourceId > 0) {
+                heightDifference -= activity.getResources()
+                        .getDimensionPixelSize(resourceId);
+            }
 
-                if (heightDifference > 30) {
-                    keyboardTrigger(!keyboardOpen);
-                    keyboardOpen = true;
-                    setWidth(WindowManager.LayoutParams.MATCH_PARENT);
-                    setHeight(heightDifference);
+            if (heightDifference > 30) {
+                keyboardTrigger(!keyboardOpen);
+                keyboardOpen = true;
+                setWidth(WindowManager.LayoutParams.MATCH_PARENT);
+                setHeight(heightDifference);
 
-                    if (isShow)
-                        show();
-                } else {
-                    keyboardTrigger(keyboardOpen);
-                    keyboardOpen = false;
-                    if (isShowing()) {
-                        invalidatePopupViews(false);
-                        dismiss();
-                    }
+                if (isShow)
+                    show();
+            } else {
+                keyboardTrigger(keyboardOpen);
+                keyboardOpen = false;
+                if (isShowing()) {
+                    invalidatePopupViews(false);
+                    dismiss();
                 }
             }
-        });
-    }
+        }
+    };
 
     /**
      * Trigger call when keyboard opened or closed
