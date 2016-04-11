@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Build;
+import android.os.CountDownTimer;
 import android.support.annotation.ColorRes;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
@@ -14,6 +15,7 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -33,7 +35,7 @@ import java.util.List;
 /**
  * Created by Владимир on 14.10.2015.
  */
-public class PopupEmoji extends PopupWindow implements View.OnClickListener, ViewPager.OnPageChangeListener {
+public class PopupEmoji extends PopupWindow implements View.OnClickListener, ViewPager.OnPageChangeListener, View.OnTouchListener {
 
     private final EmojiPagerAdapter adapter;
     private FragmentActivity activity;
@@ -64,6 +66,7 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         initRootView();
         initView();
         setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        editText.setOnTouchListener(this);
     }
 
     private void initRootView() {
@@ -123,10 +126,28 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         }
     }
 
-    private void show(){
-        if(!isShowing()){
+    CountDownTimer timerShow = new CountDownTimer(500, 500) {
+        @Override
+        public void onTick(long millisUntilFinished) {}
+
+        @Override
+        public void onFinish() {
             showAtLocation(rootView, Gravity.BOTTOM, 0, 0);
             invalidatePopupViews(true);
+            if (Build.VERSION.SDK_INT > 14) {
+                getContentView().setAlpha(0f);
+                getContentView().animate()
+                        .alpha(1f)
+                        .setDuration(300)
+                        .start();
+            }
+        }
+    };
+
+    private void show(){
+        if(!isShowing()){
+            timerShow.cancel();
+            timerShow.start();
         }
     }
 
@@ -320,8 +341,10 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
                 setWidth(WindowManager.LayoutParams.MATCH_PARENT);
                 setHeight(heightDifference);
 
-                if (isShow)
+                if (isShow) {
+
                     show();
+                }
             } else {
                 keyboardTrigger(keyboardOpen);
                 keyboardOpen = false;
@@ -385,5 +408,16 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
             e.printStackTrace();
             return 0;
         }
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_UP:
+                isShow = false;
+        }
+
+        return false;
     }
 }
