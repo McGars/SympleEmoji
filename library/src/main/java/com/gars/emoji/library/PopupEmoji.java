@@ -133,7 +133,6 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
         @Override
         public void onFinish() {
             showAtLocation(rootView, Gravity.BOTTOM, 0, 0);
-            invalidatePopupViews(true);
             if (Build.VERSION.SDK_INT > 14) {
                 getContentView().setAlpha(0f);
                 getContentView().animate()
@@ -146,6 +145,7 @@ public class PopupEmoji extends PopupWindow implements View.OnClickListener, Vie
 
     private void show(){
         if(!isShowing()){
+            invalidatePopupViews(true);
             timerShow.cancel();
             timerShow.start();
         }
